@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <title>Admin Panel - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+        }
+        .admin-header {
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .admin-header h1 { font-size: 22px; }
+        .admin-header .back { color: #667eea; cursor: pointer; font-weight: 500; }
+        .admin-container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: white;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 10px 24px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #666;
+        }
+        .tab:hover { background: #f5f5f5; }
+        .tab.active { background: #667eea; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .card-header h2 { font-size: 18px; }
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-sm { padding: 4px 12px; font-size: 13px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            font-weight: 600;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            background: #f8f9fa;
+        }
+        td { vertical-align: middle; }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-active { background: #d4edda; color: #155724; }
+        .status-inactive { background: #f8d7da; color: #721c24; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-content h2 { margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .search-box input:focus { outline: none; border-color: #667eea; }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .stat-item .number { font-size: 28px; font-weight: 700; color: #667eea; }
+        .stat-item .label { color: #666; font-size: 14px; margin-top: 4px; }
+        .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #333;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 400px;
+        }
+        .toast.show { opacity: 1; }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .admin-header { padding: 12px 16px; }
+            .admin-container { padding: 0 12px; }
+            table { font-size: 12px; }
+            th, td { padding: 6px 8px; }
+            .tab { padding: 8px 16px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <h1>⚙️ Admin Panel</h1>
+        <div>
+            <span id="adminName" style="margin-right:16px; font-weight:500;"></span>
+            <span class="back" onclick="goToDashboard()">← Back to Dashboard</span>
+        </div>
+    </div>
+
+    <div class="admin-container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="employees">👥 Employees</button>
+            <button class="tab" data-tab="leaves">📋 Leave Approvals</button>
+            <button class="tab" data-tab="reports">📊 Reports</button>
+            <button class="tab" data-tab="settings">⚙️ Settings</button>
+        </div>
+
+        <!-- EMPLOYEES TAB -->
+        <div id="tab-employees" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Employee Management</h2>
+                    <button class="btn btn-primary" onclick="openAddEmployee()">+ Add Employee</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="employeeSearch" placeholder="Search by name, ID, or department..." oninput="filterEmployees()">
+                </div>
+                <div id="employeeTable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Leave Balance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeBody">
+                            <tr><td colspan="8" style="text-align:center; color:#999;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEAVE APPROVALS TAB -->
+        <div id="tab-leaves" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Pending Approvals</h2>
+                </div>
+                <div id="approvalTable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Request ID</th>
+                                <th>Employee</th>
+                                <th>Type</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Duration</th>
+                                <th>Manager Status</th>
+                                <th>HR Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvalBody">
+                            <tr><td colspan="9" style="text-align:center; color:#999;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>All Leave Requests</h2>
+                </div>
+                <div id="allLeavesTable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Request ID</th>
+                                <th>Employee</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allLeavesBody">
+                            <tr><td colspan="6" style="text-align:center; color:#999;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- REPORTS TAB -->
+        <div id="tab-reports" class="tab-content">
+            <div class="stat-grid" id="reportStats">
+                <div class="stat-item"><div class="number" id="totalEmployees">--</div><div class="label">Total Employees</div></div>
+                <div class="stat-item"><div class="number" id="totalDepartments">--</div><div class="label">Departments</div></div>
+                <div class="stat-item"><div class="number" id="leaveThisMonth">--</div><div class="label">Leaves This Month</div></div>
+                <div class="stat-item"><div class="number" id="attendanceRate">--%</div><div class="label">Attendance Rate</div></div>
+            </div>
+
+            <div class="card">
+                <h2 style="margin-bottom:16px;">Leave Summary by Month</h2>
+                <div id="leaveChart"></div>
+            </div>
+
+            <div class="card">
+                <h2 style="margin-bottom:16px;">Department Analytics</h2>
+                <div id="deptAnalytics"></div>
+            </div>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div id="tab-settings" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom:16px;">System Settings</h2>
+                <div class="form-group">
+                    <label>Default Leave Balance (Annual)</label>
+                    <input type="number" id="defaultLeaveBalance" value="15">
+                </div>
+                <button class="btn btn-primary" onclick="updateSettings()">Save Settings</button>
+            </div>
+
+            <div class="card">
+                <h2 style="margin-bottom:16px;">Export Data</h2>
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <button class="btn btn-success" onclick="exportData('employees')">Export Employees</button>
+                    <button class="btn btn-success" onclick="exportData('leaves')">Export Leaves</button>
+                    <button class="btn btn-success" onclick="exportData('attendance')">Export Attendance</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT EMPLOYEE MODAL -->
+    <div class="modal" id="employeeModal">
+        <div class="modal-content">
+            <h2 id="employeeModalTitle">Add Employee</h2>
+            <form id="employeeForm">
+                <input type="hidden" id="editEmpId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Employee ID *</label>
+                        <input type="text" id="empId" placeholder="e.g., EMP001" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="empName" placeholder="John Doe" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="empEmail" placeholder="john@company.com" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Department *</label>
+                        <input type="text" id="empDepartment" placeholder="IT" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role *</label>
+                        <input type="text" id="empRole" placeholder="Developer" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Manager ID</label>
+                        <input type="text" id="empManagerId" placeholder="Manager's Employee ID">
+                    </div>
+                    <div class="form-group">
+                        <label>Manager Email</label>
+                        <input type="email" id="empManagerEmail" placeholder="manager@company.com">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="empPhone" placeholder="+1 234 567 890">
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <input type="text" id="empAddress" placeholder="City, Country">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Save Employee</button>
+                    <button type="button" class="btn" style="background:#e0e0e0;color:#333;" onclick="closeModal('employeeModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- APPROVAL MODAL -->
+    <div class="modal" id="approvalModal">
+        <div class="modal-content">
+            <h2>Approve/Reject Leave</h2>
+            <input type="hidden" id="approvalRequestId">
+            <input type="hidden" id="approvalRole">
+            <div class="form-group">
+                <label>Comment</label>
+                <textarea id="approvalComment" rows="3" placeholder="Add comment..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-success" onclick="handleApproval('approve')">✅ Approve</button>
+                <button class="btn btn-danger" onclick="handleApproval('reject')">❌ Reject</button>
+                <button type="button" class="btn" style="background:#e0e0e0;color:#333;" onclick="closeModal('approvalModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const token = <?!= tokenJson ?>;
+        const user = <?!= userJson ?>;
+
+        sessionStorage.setItem('hrms_token', token);
+        sessionStorage.setItem('hrms_user', JSON.stringify(user));
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!token || !user.empId) {
+                window.location.href = window.location.href.split('?')[0];
+                return;
+            }
+
+            document.getElementById('adminName').textContent = '👤 ' + (user.name || 'Admin');
+
+            const managerOnly = String(user.role || '').toUpperCase() === 'MANAGER';
+            if (managerOnly) {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    if (tab.dataset.tab !== 'leaves') tab.style.display = 'none';
+                });
+                document.querySelectorAll('.tab, .tab-content').forEach(element => element.classList.remove('active'));
+                document.querySelector('.tab[data-tab="leaves"]').classList.add('active');
+                document.getElementById('tab-leaves').classList.add('active');
+            }
+
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+
+                    if (this.dataset.tab === 'employees') loadEmployees();
+                    if (this.dataset.tab === 'leaves') loadApprovals();
+                    if (this.dataset.tab === 'reports') loadReports();
+                    if (this.dataset.tab === 'settings') loadSettings();
+                });
+            });
+
+            // Employee form submit
+            document.getElementById('employeeForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveEmployee();
+            });
+
+            // Load initial data
+            if (!managerOnly) loadEmployees();
+            loadApprovals();
+        });
+
+        // ============================================
+        // EMPLOYEE MANAGEMENT
+        // ============================================
+        function loadEmployees() {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        renderEmployees(response.employees);
+                        updateStats(response.employees);
+                    } else {
+                        showToast(response.message || 'Failed to load employees', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error loading employees', 'error');
+                    console.error(error);
+                })
+                .getEmployees(token);
+        }
+
+        function renderEmployees(employees) {
+            const tbody = document.getElementById('employeeBody');
+            if (!employees || employees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#999;">No employees found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = employees.map(emp => `
+                <tr>
+                    <td><strong>${emp.empId}</strong></td>
+                    <td>${emp.name || ''}</td>
+                    <td>${emp.email || ''}</td>
+                    <td>${emp.department || ''}</td>
+                    <td>${emp.role || ''}</td>
+                    <td><span class="status-badge ${emp.isActive === 'TRUE' || emp.isActive === true ? 'status-active' : 'status-inactive'}">
+                        ${emp.isActive === 'TRUE' || emp.isActive === true ? 'Active' : 'Inactive'}
+                    </span></td>
+                    <td>${emp.leaveBalance || 15}</td>
+                    <td class="actions-cell">
+                        <button class="btn btn-warning btn-sm" onclick="editEmployee('${emp.empId}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${emp.empId}')">Delete</button>
+                        <button class="btn btn-primary btn-sm" onclick="resetPassword('${emp.empId}')">Reset</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterEmployees() {
+            const search = document.getElementById('employeeSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#employeeBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        function updateStats(employees) {
+            if (!employees) return;
+            document.getElementById('totalEmployees').textContent = employees.length;
+            const depts = new Set(employees.map(e => e.department).filter(d => d));
+            document.getElementById('totalDepartments').textContent = depts.size;
+        }
+
+        function openAddEmployee() {
+            document.getElementById('employeeModalTitle').textContent = 'Add Employee';
+            document.getElementById('employeeForm').reset();
+            document.getElementById('editEmpId').value = '';
+            document.getElementById('empId').disabled = false;
+            openModal('employeeModal');
+        }
+
+        function editEmployee(empId) {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        const emp = response.profile;
+                        document.getElementById('employeeModalTitle').textContent = 'Edit Employee';
+                        document.getElementById('editEmpId').value = emp.empId;
+                        document.getElementById('empId').value = emp.empId;
+                        document.getElementById('empId').disabled = true;
+                        document.getElementById('empName').value = emp.name || '';
+                        document.getElementById('empEmail').value = emp.email || '';
+                        document.getElementById('empDepartment').value = emp.department || '';
+                        document.getElementById('empRole').value = emp.role || '';
+                        document.getElementById('empManagerId').value = emp.managerId || '';
+                        document.getElementById('empManagerEmail').value = emp.managerEmail || '';
+                        document.getElementById('empPhone').value = emp.phone || '';
+                        document.getElementById('empAddress').value = emp.address || '';
+                        openModal('employeeModal');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error loading employee', 'error');
+                })
+                .getEmployee(token, empId);
+        }
+
+        function saveEmployee() {
+            const data = {
+                empId: document.getElementById('empId').value.trim(),
+                name: document.getElementById('empName').value.trim(),
+                email: document.getElementById('empEmail').value.trim(),
+                department: document.getElementById('empDepartment').value.trim(),
+                role: document.getElementById('empRole').value.trim(),
+                managerId: document.getElementById('empManagerId').value.trim(),
+                managerEmail: document.getElementById('empManagerEmail').value.trim(),
+                phone: document.getElementById('empPhone').value.trim(),
+                address: document.getElementById('empAddress').value.trim(),
+                token: token
+            };
+
+            const editEmpId = document.getElementById('editEmpId').value;
+            const isEdit = editEmpId !== '';
+
+            const runner = google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        showToast(response.message, 'success');
+                        closeModal('employeeModal');
+                        loadEmployees();
+                    } else {
+                        showToast(response.message || 'Operation failed', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error saving employee', 'error');
+                    console.error(error);
+                });
+
+            if (isEdit) {
+                runner.updateEmployee(token, editEmpId, data);
+            } else {
+                runner.addEmployee(token, data);
+            }
+        }
+
+        function goToDashboard() {
+            const baseUrl = window.location.href.split('?')[0];
+            window.location.href = baseUrl + '?token=' + encodeURIComponent(token);
+        }
+
+        function deleteEmployee(empId) {
+            if (!confirm(`Are you sure you want to deactivate employee ${empId}?`)) return;
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        showToast(response.message, 'success');
+                        loadEmployees();
+                    } else {
+                        showToast(response.message || 'Failed to delete', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error deleting employee', 'error');
+                })
+                .deleteEmployee(token, empId);
+        }
+
+        function resetPassword(empId) {
+            if (!confirm(`Reset password for ${empId}? A temporary password will be shown to you.`)) return;
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        showToast(response.message, 'success');
+                    } else {
+                        showToast(response.message || 'Failed to reset password', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error resetting password', 'error');
+                })
+                .resetPassword(token, empId);
+        }
+
+        // ============================================
+        // LEAVE APPROVALS
+        // ============================================
+        function loadApprovals() {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        renderApprovals(response.requests || []);
+                    } else {
+                        showToast(response.message || 'Failed to load approvals', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error loading approvals', 'error');
+                    console.error(error);
+                })
+                .getPendingApprovals(token);
+        }
+
+        function renderApprovals(requests) {
+            const tbody = document.getElementById('approvalBody');
+            if (!requests || requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#999;">No pending approvals</td></tr>';
+                return;
+            }
+
+            // Determine role for approval actions
+            const normalizedRole = String(user.role || '').toUpperCase();
+            const isHR = normalizedRole === 'HR' || normalizedRole === 'ADMIN';
+            const isManager = normalizedRole === 'MANAGER';
+
+            tbody.innerHTML = requests.map(req => {
+                let actionHtml = '';
+                if (isHR && req.managerStatus === 'APPROVED' && req.hrStatus === 'PENDING') {
+                    actionHtml = `<button class="btn btn-primary btn-sm" onclick="openApproval('${req.requestId}', 'hr')">Review</button>`;
+                } else if (isManager && req.managerStatus === 'PENDING') {
+                    actionHtml = `<button class="btn btn-primary btn-sm" onclick="openApproval('${req.requestId}', 'manager')">Review</button>`;
+                } else if (normalizedRole === 'ADMIN') {
+                    actionHtml = `<button class="btn btn-primary btn-sm" onclick="openApproval('${req.requestId}', 'admin')">Review</button>`;
+                }
+
+                return `
+                    <tr>
+                        <td>${req.requestId}</td>
+                        <td>${req.employeeName || req.empId}</td>
+                        <td>${req.type}</td>
+                        <td>${req.from}</td>
+                        <td>${req.to}</td>
+                        <td>${req.duration} days</td>
+                        <td><span class="status-badge status-${req.managerStatus.toLowerCase()}">${req.managerStatus}</span></td>
+                        <td><span class="status-badge status-${req.hrStatus.toLowerCase()}">${req.hrStatus}</span></td>
+                        <td>${actionHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Also load all leaves for the second table
+            loadAllLeaves();
+        }
+
+        function loadAllLeaves() {
+            const tbody = document.getElementById('allLeavesBody');
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (!response.success || !response.requests || response.requests.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No leave requests found</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = response.requests.map(req => `
+                        <tr>
+                            <td>${req.requestId}</td>
+                            <td>${req.employeeName || req.empId}</td>
+                            <td>${req.type}</td>
+                            <td>${req.from} to ${req.to}</td>
+                            <td>${req.duration} days</td>
+                            <td><span class="status-badge status-${req.status.toLowerCase()}">${req.status}</span></td>
+                        </tr>
+                    `).join('');
+                })
+                .withFailureHandler(function(error) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#dc3545;">Unable to load requests</td></tr>';
+                    console.error(error);
+                })
+                .getAllLeaveRequests(token);
+        }
+
+        function openApproval(requestId, role) {
+            document.getElementById('approvalRequestId').value = requestId;
+            document.getElementById('approvalRole').value = role;
+            document.getElementById('approvalComment').value = '';
+            openModal('approvalModal');
+        }
+
+        function handleApproval(action) {
+            const requestId = document.getElementById('approvalRequestId').value;
+            const role = document.getElementById('approvalRole').value;
+            const comment = document.getElementById('approvalComment').value;
+
+            if (action === 'approve') {
+                google.script.run
+                    .withSuccessHandler(function(response) {
+                        if (response.success) {
+                            showToast(response.message, 'success');
+                            closeModal('approvalModal');
+                            loadApprovals();
+                            loadEmployees();
+                        } else {
+                            showToast(response.message || 'Failed to approve', 'error');
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        showToast('Error processing approval', 'error');
+                        console.error(error);
+                    })
+                    .approveLeave(token, requestId, role, comment);
+            } else {
+                google.script.run
+                    .withSuccessHandler(function(response) {
+                        if (response.success) {
+                            showToast(response.message, 'success');
+                            closeModal('approvalModal');
+                            loadApprovals();
+                        } else {
+                            showToast(response.message || 'Failed to reject', 'error');
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        showToast('Error processing rejection', 'error');
+                        console.error(error);
+                    })
+                    .rejectLeave(token, requestId, role, comment);
+            }
+        }
+
+        // ============================================
+        // REPORTS
+        // ============================================
+        function loadReports() {
+            // Load employee stats
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        document.getElementById('totalEmployees').textContent = response.employees?.length || 0;
+                        const depts = new Set((response.employees || []).map(e => e.department).filter(d => d));
+                        document.getElementById('totalDepartments').textContent = depts.size;
+                    }
+                })
+                .getEmployees(token);
+
+            // Load leave summary
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        renderLeaveChart(response.data || []);
+                        const currentMonth = new Date().toISOString().slice(0, 7);
+                        const month = (response.data || []).find(item => item.month === currentMonth);
+                        document.getElementById('leaveThisMonth').textContent = month ? month.total : 0;
+                    }
+                })
+                .getHRReport(token, 'leave_summary', {});
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        document.getElementById('attendanceRate').textContent = response.data + '%';
+                    }
+                })
+                .getHRReport(token, 'attendance_rate', {});
+
+            // Load department analytics
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        renderDeptAnalytics(response.data || {});
+                    }
+                })
+                .getHRReport(token, 'department_analytics', {});
+        }
+
+        function renderLeaveChart(data) {
+            const container = document.getElementById('leaveChart');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="color:#999;text-align:center;">No data available</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Month</th><th>Total</th><th>Approved</th><th>Rejected</th><th>Pending</th></tr></thead><tbody>';
+            data.forEach(d => {
+                html += `<tr>
+                    <td>${d.month}</td>
+                    <td>${d.total}</td>
+                    <td><span style="color:#28a745;">${d.approved}</span></td>
+                    <td><span style="color:#dc3545;">${d.rejected}</span></td>
+                    <td><span style="color:#ffc107;">${d.pending}</span></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderDeptAnalytics(data) {
+            const container = document.getElementById('deptAnalytics');
+            if (!data || Object.keys(data).length === 0) {
+                container.innerHTML = '<p style="color:#999;text-align:center;">No department data available</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Department</th><th>Total Employees</th><th>Roles</th></tr></thead><tbody>';
+            for (const dept in data) {
+                const roles = Object.entries(data[dept].roles)
+                    .map(([role, count]) => `${role}: ${count}`)
+                    .join(', ');
+                html += `<tr>
+                    <td><strong>${dept}</strong></td>
+                    <td>${data[dept].count}</td>
+                    <td>${roles}</td>
+                </tr>`;
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // SETTINGS
+        // ============================================
+        function loadSettings() {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        document.getElementById('defaultLeaveBalance').value = response.defaultLeaveBalance;
+                    }
+                })
+                .getSystemSettings(token);
+        }
+
+        function updateSettings() {
+            const value = Number(document.getElementById('defaultLeaveBalance').value);
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    showToast(response.message || 'Unable to save settings', response.success ? 'success' : 'error');
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Unable to save settings', 'error');
+                    console.error(error);
+                })
+                .updateSystemSettings(token, { defaultLeaveBalance: value });
+        }
+
+        function exportData(type) {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (!response.success) {
+                        showToast(response.message || 'Export failed', 'error');
+                        return;
+                    }
+                    const blob = new Blob([response.content], { type: 'text/csv;charset=utf-8' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = response.filename;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    showToast('Export downloaded', 'success');
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Export failed', 'error');
+                    console.error(error);
+                })
+                .exportDataCsv(token, type);
+        }
+
+        // ============================================
+        // MODAL CONTROLS
+        // ============================================
+        function openModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+
+        // ============================================
+        // TOAST NOTIFICATION
+        // ============================================
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HRMS Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 12px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .header h1 { font-size: 20px; color: #1a1a2e; }
+        .header .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .header .user-info .name { font-weight: 500; }
+        .header .user-info .role { color: #666; font-size: 13px; }
+        .header .user-info .logout {
+            color: #dc3545;
+            cursor: pointer;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .header .user-info .logout:hover { background: #f8d7da; }
+        .admin-link {
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+            border: 1px solid #667eea;
+        }
+        .admin-link:hover { background: #667eea; color: white; }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 16px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .stat-card .number { font-size: 28px; font-weight: 700; color: #667eea; }
+        .stat-card .label { color: #666; font-size: 13px; margin-top: 4px; }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .action-btn {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .action-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+        .action-btn .icon { font-size: 28px; display: block; margin-bottom: 6px; }
+        .action-btn .label { font-size: 13px; color: #333; font-weight: 500; }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .card h2 { font-size: 16px; margin-bottom: 16px; color: #333; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            font-weight: 600;
+            color: #666;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .status-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 28px;
+            border-radius: 16px;
+            max-width: 480px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-content h2 { margin-bottom: 16px; font-size: 18px; }
+        .modal-content .close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal-content .close:hover { color: #333; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: 500; font-size: 13px; }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 14px 24px;
+            border-radius: 10px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 400px;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .toast.show { opacity: 1; }
+        .toast.success { background: #28a745; color: white; }
+        .toast.error { background: #dc3545; color: white; }
+        .toast.info { background: #17a2b8; color: white; }
+
+        /* Empty state */
+        .empty {
+            text-align: center;
+            padding: 24px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header { padding: 10px 16px; }
+            .header h1 { font-size: 16px; }
+            .container { padding: 0 10px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .quick-actions { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 12px; }
+            th, td { padding: 6px 8px; }
+            .modal-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🏢 HRMS Dashboard</h1>
+        <div class="user-info">
+            <span class="name" id="userName">Loading...</span>
+            <span class="role" id="userRole"></span>
+            <span class="admin-link" id="adminLink" style="display:none;" onclick="goToAdmin()">⚙️ Admin</span>
+            <span class="logout" onclick="handleLogout()">🚪 Logout</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container" id="mainContent">
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card"><div class="number" id="leaveBalance">--</div><div class="label">📅 Leave Balance</div></div>
+            <div class="stat-card"><div class="number" id="pendingRequests">--</div><div class="label">📋 Pending Requests</div></div>
+            <div class="stat-card"><div class="number" id="monthlyLeaves">--</div><div class="label">📊 Leaves This Month</div></div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="action-btn" onclick="openLeaveModal()">
+                <span class="icon">📝</span>
+                <span class="label">Apply Leave</span>
+            </div>
+            <div class="action-btn" onclick="markAttendanceIn()">
+                <span class="icon">✅</span>
+                <span class="label">Check In</span>
+            </div>
+            <div class="action-btn" onclick="markAttendanceOut()">
+                <span class="icon">🚪</span>
+                <span class="label">Check Out</span>
+            </div>
+            <div class="action-btn" onclick="openProfileModal()">
+                <span class="icon">👤</span>
+                <span class="label">My Profile</span>
+            </div>
+            <div class="action-btn" onclick="openChangePassword()">
+                <span class="icon">🔑</span>
+                <span class="label">Change Password</span>
+            </div>
+        </div>
+
+        <!-- Leave History -->
+        <div class="card">
+            <h2>📋 Recent Leave History</h2>
+            <div id="leaveHistory">
+                <div class="empty">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Attendance -->
+        <div class="card">
+            <h2>✅ This Month's Attendance</h2>
+            <div id="attendanceTable">
+                <div class="empty">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEAVE MODAL -->
+    <div class="modal" id="leaveModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('leaveModal')">&times;</span>
+            <h2>📝 Apply for Leave</h2>
+            <form id="leaveForm">
+                <div class="form-group">
+                    <label>Leave Type</label>
+                    <select id="leaveType" required>
+                        <option value="annual">Annual Leave</option>
+                        <option value="sick">Sick Leave</option>
+                        <option value="casual">Casual Leave</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>From Date</label>
+                    <input type="date" id="leaveFrom" required>
+                </div>
+                <div class="form-group">
+                    <label>To Date</label>
+                    <input type="date" id="leaveTo" required>
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <textarea id="leaveReason" rows="3" placeholder="Brief description"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('leaveModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('profileModal')">&times;</span>
+            <h2>👤 My Profile</h2>
+            <div id="profileContent">
+                <div class="empty">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGE PASSWORD MODAL -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+            <h2>🔑 Change Password</h2>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirmPassword" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('passwordModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================
+        // GLOBAL STATE
+        // ============================================
+        // ============================================
+// GLOBAL STATE
+// ============================================
+
+// Values supplied securely by Code.gs doGet()
+const token = <?!= tokenJson ?>;
+const user = <?!= userJson ?>;
+
+let dashboardData = null;
+
+
+// Optional: keep browser storage synchronized
+if (token) {
+  sessionStorage.setItem('hrms_token', token);
+}
+
+if (user && user.empId) {
+  sessionStorage.setItem(
+    'hrms_user',
+    JSON.stringify(user)
+  );
+}
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener(
+  'DOMContentLoaded',
+  function () {
+
+    console.log('HRMS MainApp started');
+    console.log('Token available:', !!token);
+    console.log('User:', user);
+
+
+    // Safety check
+    if (!token || !user || !user.empId) {
+
+      document.body.innerHTML = `
+        <div style="
+          font-family:Arial;
+          padding:40px;
+          text-align:center;
+        ">
+          <h2>Session Error</h2>
+          <p>Your login session could not be loaded.</p>
+
+          <button
+            onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'"
+            style="
+              margin-top:20px;
+              padding:10px 20px;
+              cursor:pointer;
+            "
+          >
+            Return to Login
+          </button>
+        </div>
+      `;
+
+      return;
+    }
+
+
+    // ========================================
+    // USER INFORMATION
+    // ========================================
+
+    document
+      .getElementById('userName')
+      .textContent =
+        user.name || user.empId;
+
+
+    document
+      .getElementById('userRole')
+      .textContent =
+        user.role || 'Employee';
+
+
+    // ========================================
+    // ADMIN BUTTON
+    // ========================================
+
+    if (
+      user.isAdmin ||
+      user.role === 'Admin' ||
+      user.role === 'HR' ||
+      user.role === 'Manager'
+    ) {
+
+      const adminLink =
+        document.getElementById('adminLink');
+
+      if (adminLink) {
+        adminLink.style.display = 'inline';
+      }
+
+    }
+
+
+    // ========================================
+    // LOAD DASHBOARD
+    // ========================================
+
+    loadDashboard();
+
+
+    // Leave form
+    const leaveForm =
+      document.getElementById('leaveForm');
+
+    if (leaveForm) {
+
+      leaveForm.addEventListener(
+        'submit',
+        function (e) {
+
+          e.preventDefault();
+          submitLeave();
+
+        }
+      );
+
+    }
+
+
+    // Password form
+    const passwordForm =
+      document.getElementById('passwordForm');
+
+    if (passwordForm) {
+
+      passwordForm.addEventListener(
+        'submit',
+        function (e) {
+
+          e.preventDefault();
+          submitPasswordChange();
+
+        }
+      );
+
+    }
+
+  }
+);
+        // ============================================
+        // DASHBOARD DATA
+        // ============================================
+        function loadDashboard() {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        dashboardData = response;
+                        updateDashboard(response);
+                    } else {
+                        showToast(response.message || 'Failed to load data', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error loading dashboard', 'error');
+                    console.error(error);
+                })
+                .getDashboardData(token);
+        }
+
+        function updateDashboard(data) {
+            // Stats
+            document.getElementById('leaveBalance').textContent = data.leaveBalance || 0;
+            document.getElementById('pendingRequests').textContent = data.pendingRequests || 0;
+            document.getElementById('monthlyLeaves').textContent = data.monthlyLeaves || 0;
+
+            // Leave History
+            renderLeaveHistory(data.leaveHistory || []);
+
+            // Attendance
+            renderAttendance(data.attendance || []);
+        }
+
+        function renderLeaveHistory(leaves) {
+            const container = document.getElementById('leaveHistory');
+            if (!leaves || leaves.length === 0) {
+                container.innerHTML = '<div class="empty">No leave records found</div>';
+                return;
+            }
+
+            let html = `<table>
+                <thead><tr><th>From</th><th>To</th><th>Type</th><th>Days</th><th>Status</th></tr></thead>
+                <tbody>`;
+            leaves.forEach(l => {
+                const statusClass = l.status.toLowerCase();
+                html += `<tr>
+                    <td>${l.from}</td>
+                    <td>${l.to}</td>
+                    <td>${l.type}</td>
+                    <td>${l.duration}</td>
+                    <td><span class="status-badge status-${statusClass}">${l.status}</span></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderAttendance(attendance) {
+            const container = document.getElementById('attendanceTable');
+            if (!attendance || attendance.length === 0) {
+                container.innerHTML = '<div class="empty">No attendance records this month</div>';
+                return;
+            }
+
+            let html = `<table>
+                <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th></tr></thead>
+                <tbody>`;
+            attendance.forEach(a => {
+                html += `<tr>
+                    <td>${a.date}</td>
+                    <td>${a.checkIn}</td>
+                    <td>${a.checkOut}</td>
+                    <td>${a.hours}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // LEAVE APPLICATION
+        // ============================================
+        function openLeaveModal() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('leaveFrom').value = today;
+            document.getElementById('leaveTo').value = today;
+            document.getElementById('leaveForm').reset();
+            openModal('leaveModal');
+        }
+
+        function submitLeave() {
+            const data = {
+                type: document.getElementById('leaveType').value,
+                from: document.getElementById('leaveFrom').value,
+                to: document.getElementById('leaveTo').value,
+                reason: document.getElementById('leaveReason').value,
+                token: token
+            };
+
+            if (!data.from || !data.to) {
+                showToast('Please select dates', 'error');
+                return;
+            }
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        showToast(response.message, 'success');
+                        closeModal('leaveModal');
+                        loadDashboard();
+                    } else {
+                        showToast(response.message || 'Failed to apply leave', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error applying leave', 'error');
+                    console.error(error);
+                })
+                .applyLeave(data);
+        }
+
+        // ============================================
+        // ATTENDANCE
+        // ============================================
+        function markAttendanceIn() {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        showToast(response.message, 'success');
+                        loadDashboard();
+                    } else {
+                        showToast(response.message || 'Failed to check in', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error checking in', 'error');
+                    console.error(error);
+                })
+                .markAttendance(token, 'IN');
+        }
+
+        function markAttendanceOut() {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        showToast(response.message, 'success');
+                        loadDashboard();
+                    } else {
+                        showToast(response.message || 'Failed to check out', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error checking out', 'error');
+                    console.error(error);
+                })
+                .markAttendance(token, 'OUT');
+        }
+
+        // ============================================
+        // PROFILE
+        // ============================================
+        function openProfileModal() {
+            openModal('profileModal');
+            document.getElementById('profileContent').innerHTML = '<div class="empty">Loading...</div>';
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        const p = response.profile;
+                        let html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:14px;">`;
+                        const fields = [
+                            ['Employee ID', p.empId],
+                            ['Name', p.name],
+                            ['Email', p.email],
+                            ['Department', p.department],
+                            ['Role', p.role],
+                            ['Manager ID', p.managerId || 'N/A'],
+                            ['Phone', p.phone || 'N/A'],
+                            ['Address', p.address || 'N/A'],
+                            ['Joining Date', p.joiningDate || 'N/A'],
+                            ['Leave Balance', p.leaveBalance || 15]
+                        ];
+                        fields.forEach(([label, value]) => {
+                            html += `<div style="font-weight:500;color:#666;">${label}</div>`;
+                            html += `<div>${value || 'N/A'}</div>`;
+                        });
+                        html += '</div>';
+                        document.getElementById('profileContent').innerHTML = html;
+                    } else {
+                        document.getElementById('profileContent').innerHTML = '<div class="empty">Failed to load profile</div>';
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    document.getElementById('profileContent').innerHTML = '<div class="empty">Error loading profile</div>';
+                    console.error(error);
+                })
+                .getEmployeeProfile(token);
+        }
+
+        // ============================================
+        // CHANGE PASSWORD
+        // ============================================
+        function openChangePassword() {
+            document.getElementById('passwordForm').reset();
+            openModal('passwordModal');
+        }
+
+        function submitPasswordChange() {
+            const current = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (!current || !newPass || !confirm) {
+                showToast('Please fill all fields', 'error');
+                return;
+            }
+
+            if (newPass.length < 6) {
+                showToast('New password must be at least 6 characters', 'error');
+                return;
+            }
+
+            if (newPass !== confirm) {
+                showToast('Passwords do not match', 'error');
+                return;
+            }
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        showToast(response.message, 'success');
+                        closeModal('passwordModal');
+                    } else {
+                        showToast(response.message || 'Failed to change password', 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showToast('Error changing password', 'error');
+                    console.error(error);
+                })
+                .changePassword(token, current, newPass);
+        }
+
+        // ============================================
+        // ADMIN NAVIGATION
+        // ============================================
+        function goToAdmin() {
+            const baseUrl = window.location.href.split('?')[0];
+            window.location.href = baseUrl + '?token=' + encodeURIComponent(token) + '&page=admin';
+        }
+
+        // ============================================
+        // LOGOUT
+        // ============================================
+        function handleLogout() {
+            if (!confirm('Are you sure you want to logout?')) return;
+
+            google.script.run
+                .withSuccessHandler(function() {
+                    sessionStorage.clear();
+                    window.location.href = window.location.href.split('?')[0];
+                })
+                .withFailureHandler(function() {
+                    sessionStorage.clear();
+                    window.location.href = window.location.href.split('?')[0];
+                })
+                .logout(token);
+        }
+
+        // ============================================
+        // MODAL CONTROLS
+        // ============================================
+        function openModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+
+        // ============================================
+        // TOAST NOTIFICATION
+        // ============================================
+        let toastTimeout = null;
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.show').forEach(modal => {
+                    modal.classList.remove('show');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

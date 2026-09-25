@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <title>HR Reports - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+        }
+        .header {
+            background: white;
+            padding: 16px 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 22px; }
+        .back { color: #667eea; cursor: pointer; }
+        .container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .card h2 { font-size: 16px; margin-bottom: 16px; color: #666; }
+        .stat { text-align: center; padding: 16px; }
+        .stat .number { font-size: 36px; font-weight: 700; color: #667eea; }
+        .stat .label { color: #999; font-size: 14px; margin-top: 4px; }
+        .mini-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th { font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; background: #f8f9fa; }
+        .badge { padding: 2px 10px; border-radius: 20px; font-size: 12px; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        @media (max-width: 768px) {
+            .report-grid { grid-template-columns: 1fr; }
+            .header { padding: 12px 16px; }
+            .container { padding: 0 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 HR Analytics Reports</h1>
+        <span class="back" onclick="goToDashboard()">← Back to Dashboard</span>
+    </div>
+
+    <div class="container">
+        <div class="report-grid">
+            <!-- Leave Summary -->
+            <div class="card">
+                <h2>📋 Leave Summary by Month</h2>
+                <div id="leaveSummary">Loading...</div>
+            </div>
+
+            <!-- Attendance Summary -->
+            <div class="card">
+                <h2>✅ Attendance Summary</h2>
+                <div id="attendanceSummary">Loading...</div>
+            </div>
+
+            <!-- Department Analytics -->
+            <div class="card">
+                <h2>🏢 Department Analytics</h2>
+                <div id="deptAnalytics">Loading...</div>
+            </div>
+
+            <!-- Employee Metrics -->
+            <div class="card">
+                <h2>👥 Employee Metrics</h2>
+                <div id="employeeMetrics">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = <?!= tokenJson ?>;
+        const user = <?!= userJson ?>;
+
+        sessionStorage.setItem('hrms_token', token);
+        sessionStorage.setItem('hrms_user', JSON.stringify(user));
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!token || !user.empId) {
+                window.location.href = window.location.href.split('?')[0];
+                return;
+            }
+            loadAllReports();
+        });
+
+        function loadAllReports() {
+            // Leave Summary
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        renderLeaveSummary(response.data || []);
+                    }
+                })
+                .getHRReport(token, 'leave_summary', {});
+
+            // Attendance Summary
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        renderAttendanceSummary(response.data || []);
+                    }
+                })
+                .getHRReport(token, 'attendance_summary', {});
+
+            // Department Analytics
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        renderDeptAnalytics(response.data || {});
+                    }
+                })
+                .getHRReport(token, 'department_analytics', {});
+
+            // Employee Metrics
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        renderEmployeeMetrics(response.data || []);
+                    }
+                })
+                .getHRReport(token, 'employee_metrics', {});
+        }
+
+        function goToDashboard() {
+            const baseUrl = window.location.href.split('?')[0];
+            window.location.href = baseUrl + '?token=' + encodeURIComponent(token);
+        }
+
+        function renderLeaveSummary(data) {
+            const container = document.getElementById('leaveSummary');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="color:#999;text-align:center;">No data available</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Month</th><th>Total</th><th>Approved</th><th>Rejected</th><th>Pending</th></tr></thead><tbody>';
+            data.slice(0, 12).forEach(d => {
+                html += `<tr>
+                    <td>${d.month}</td>
+                    <td>${d.total}</td>
+                    <td><span class="badge badge-success">${d.approved}</span></td>
+                    <td><span class="badge badge-danger">${d.rejected}</span></td>
+                    <td><span class="badge badge-warning">${d.pending}</span></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderAttendanceSummary(data) {
+            const container = document.getElementById('attendanceSummary');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="color:#999;text-align:center;">No data available</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Employee</th><th>Days</th><th>Hours</th><th>Avg Hours</th><th>Late</th></tr></thead><tbody>';
+            data.slice(0, 10).forEach(d => {
+                html += `<tr>
+                    <td>${d.name || d.empId}</td>
+                    <td>${d.days}</td>
+                    <td>${d.hours.toFixed(1)}</td>
+                    <td>${d.avgHours || '--'}</td>
+                    <td><span class="badge ${d.late > 3 ? 'badge-danger' : 'badge-info'}">${d.late}</span></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderDeptAnalytics(data) {
+            const container = document.getElementById('deptAnalytics');
+            if (!data || Object.keys(data).length === 0) {
+                container.innerHTML = '<p style="color:#999;text-align:center;">No data available</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Department</th><th>Total</th><th>Roles</th></tr></thead><tbody>';
+            for (const dept in data) {
+                const roles = Object.entries(data[dept].roles)
+                    .map(([role, count]) => `${role}: ${count}`)
+                    .join(', ');
+                html += `<tr>
+                    <td><strong>${dept}</strong></td>
+                    <td>${data[dept].count}</td>
+                    <td>${roles}</td>
+                </tr>`;
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderEmployeeMetrics(data) {
+            const container = document.getElementById('employeeMetrics');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="color:#999;text-align:center;">No data available</p>';
+                return;
+            }
+
+            // Show summary stats
+            const total = data.length;
+            const active = data.filter(e => e.status === 'TRUE' || e.status === true).length;
+            const avgBalance = (data.reduce((sum, e) => sum + (e.leaveBalance || 0), 0) / total).toFixed(1);
+
+            let html = `
+                <div class="mini-stats">
+                    <div class="stat"><div class="number">${total}</div><div class="label">Total</div></div>
+                    <div class="stat"><div class="number">${active}</div><div class="label">Active</div></div>
+                    <div class="stat"><div class="number">${avgBalance}</div><div class="label">Avg Leave</div></div>
+                </div>
+                <table style="margin-top:16px;">
+                    <thead><tr><th>ID</th><th>Name</th><th>Dept</th><th>Leave Balance</th></tr></thead>
+                    <tbody>
+            `;
+            data.slice(0, 8).forEach(e => {
+                html += `<tr>
+                    <td>${e.empId}</td>
+                    <td>${e.name}</td>
+                    <td>${e.department}</td>
+                    <td>${e.leaveBalance || 0}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

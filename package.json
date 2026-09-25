@@ -1,0 +1,12 @@
+{
+  "name": "hrms-apps-script",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local validation for the HRMS Google Apps Script web app",
+  "scripts": {
+    "test": "node tests/static-check.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

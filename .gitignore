@@ -1,0 +1,7 @@
+.clasp.json
+.clasprc.json
+node_modules/
+coverage/
+*.log
+.DS_Store
+Thumbs.db

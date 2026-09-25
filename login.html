@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>HRMS Login</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+
+    .login-container {
+      background: #ffffff;
+      padding: 48px 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .logo-area {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-area h1 {
+      font-size: 28px;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+    }
+
+    .logo-area p {
+      color: #777;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper input {
+      padding-right: 48px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-size: 18px;
+    }
+
+    .btn {
+      width: 100%;
+      min-height: 48px;
+      padding: 13px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+    }
+
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .error {
+      display: none;
+      margin-top: 15px;
+      padding: 11px;
+      border-radius: 7px;
+      background: #f8d7da;
+      color: #721c24;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .error.show {
+      display: block;
+    }
+
+    .success {
+      display: none;
+      margin-top: 15px;
+      padding: 11px;
+      border-radius: 7px;
+      background: #d4edda;
+      color: #155724;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .success.show {
+      display: block;
+    }
+
+    .footer {
+      margin-top: 25px;
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="login-container">
+
+  <div class="logo-area">
+    <h1>🏢 HRMS Portal</h1>
+    <p>Human Resource Management System</p>
+  </div>
+
+  <form id="loginForm">
+
+    <div class="form-group">
+      <label for="empId">Employee ID</label>
+
+      <input
+        type="text"
+        id="empId"
+        placeholder="Enter your Employee ID"
+        autocomplete="username"
+        required
+        autofocus
+      >
+    </div>
+
+    <div class="form-group">
+
+      <label for="password">Password</label>
+
+      <div class="password-wrapper">
+        <input
+          type="password"
+          id="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        >
+
+        <button
+          type="button"
+          class="toggle-password"
+          id="togglePassword"
+          title="Show password"
+        >
+          👁️
+        </button>
+
+      </div>
+    </div>
+
+    <button type="submit" class="btn" id="loginBtn">
+      <span id="loginText">Sign In</span>
+    </button>
+
+    <div id="errorMsg" class="error"></div>
+    <div id="successMsg" class="success"></div>
+
+  </form>
+
+  <div class="footer">
+    Secure HRMS Portal
+  </div>
+
+</div>
+
+<script>
+
+  const loginForm = document.getElementById('loginForm');
+  const empIdInput = document.getElementById('empId');
+  const passwordInput = document.getElementById('password');
+
+  const loginBtn = document.getElementById('loginBtn');
+  const loginText = document.getElementById('loginText');
+
+  const errorMsg = document.getElementById('errorMsg');
+  const successMsg = document.getElementById('successMsg');
+
+
+  // ==========================================
+  // SHOW / HIDE PASSWORD
+  // ==========================================
+
+  document.getElementById('togglePassword')
+    .addEventListener('click', function () {
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        this.textContent = '🙈';
+      } else {
+        passwordInput.type = 'password';
+        this.textContent = '👁️';
+      }
+
+    });
+
+
+  // ==========================================
+  // LOGIN
+  // ==========================================
+
+  loginForm.addEventListener('submit', function (e) {
+
+    e.preventDefault();
+
+    hideMessages();
+
+    // Normalize employee ID
+    const empId = empIdInput.value.trim().toUpperCase();
+    const password = passwordInput.value;
+
+    if (!empId || !password) {
+      showError('Please enter Employee ID and password.');
+      return;
+    }
+
+    setLoading(true);
+
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading(false);
+
+        if (!response) {
+          showError('No response received from the server.');
+          return;
+        }
+
+        if (!response.success) {
+          showError(response.message || 'Sign in failed.');
+          return;
+        }
+
+        sessionStorage.setItem('hrms_token', response.token);
+        sessionStorage.setItem('hrms_user', JSON.stringify(response.user));
+
+        const baseUrl = window.location.href.split('?')[0];
+        window.top.location.href = baseUrl + '?token=' + encodeURIComponent(response.token);
+      })
+      .withFailureHandler(function (error) {
+        setLoading(false);
+        console.error('Login error:', error);
+        showError('Unable to sign in. Please try again.');
+      })
+      .login(empId, password);
+  });
+  // ==========================================
+  // UI HELPERS
+  // ==========================================
+
+  function setLoading(loading) {
+
+    loginBtn.disabled = loading;
+
+    loginText.textContent =
+      loading ? 'Signing in...' : 'Sign In';
+
+  }
+
+
+  function showError(message) {
+
+    successMsg.classList.remove('show');
+
+    errorMsg.textContent = message;
+    errorMsg.classList.add('show');
+
+  }
+
+
+  function showSuccess(message) {
+
+    errorMsg.classList.remove('show');
+
+    successMsg.textContent = message;
+    successMsg.classList.add('show');
+
+  }
+
+
+  function hideMessages() {
+
+    errorMsg.classList.remove('show');
+    successMsg.classList.remove('show');
+
+  }
+
+
+  // ==========================================
+  // EXISTING SESSION
+  // ==========================================
+
+  window.addEventListener('load', function () {
+
+    /*
+      Do NOT automatically redirect just because
+      sessionStorage contains an old token.
+
+      doGet() is responsible for validating tokens.
+    */
+
+    empIdInput.focus();
+
+  });
+
+</script>
+
+</body>
+</html>
