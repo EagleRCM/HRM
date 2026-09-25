@@ -2,6 +2,8 @@
 
 An employee HR portal built as a Google Apps Script web app with a Google Sheet as its datastore. It includes login sessions, employee dashboards, attendance, leave requests, manager/HR approvals, employee administration, reports, settings, and CSV exports.
 
+This repository began as the HRM trial project for sharing and testing.
+
 ## Files used by the deployed app
 
 - `code.gs` — server-side Apps Script code
