@@ -1,0 +1,9 @@
+.git/**
+tests/**
+node_modules/**
+.gitattributes
+.gitignore
+.clasp.json
+package.json
+package-lock.json
+README.md
