@@ -21,7 +21,7 @@ const allowedPublicFunctions = new Set([
   'changePassword', 'getEmployees', 'getEmployee', 'addEmployee', 'updateEmployee',
   'deleteEmployee', 'resetPassword', 'getEmployeeProfile', 'getPendingApprovals',
   'approveLeave', 'rejectLeave', 'getHRReport', 'getAllLeaveRequests',
-  'getSystemSettings', 'updateSystemSettings', 'exportDataCsv'
+  'getSystemSettings', 'updateSystemSettings', 'exportDataCsv', 'initializeHrms'
 ]);
 for (const name of serverFunctions) {
   assert(name.endsWith('_') || allowedPublicFunctions.has(name),
@@ -174,6 +174,7 @@ assert.equal(context.markAttendance(employeeLogin.token, 'IN').success, true);
 assert.equal(context.markAttendance(employeeLogin.token, 'OUT').success, true);
 assert.equal(context.getDashboardData(employeeLogin.token).attendance.length, 1);
 assert.equal(context.validateSetup_().ok, true);
+assert.equal(context.initializeHrms().success, true);
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'appsscript.json'), 'utf8'));
 assert.equal(manifest.runtimeVersion, 'V8');

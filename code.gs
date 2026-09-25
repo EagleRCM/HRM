@@ -516,6 +516,28 @@ function validateSetup_() {
   return result;
 }
 
+function hasAdminAccount_() {
+  const sheet = getSpreadsheet_().getSheetByName(SHEET_NAME);
+  if (!sheet) return false;
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0] || [];
+  const roleIndex = headers.indexOf('role');
+  if (roleIndex === -1) return false;
+  return data.slice(1).some(function(row) {
+    return String(row[roleIndex] || '').toUpperCase() === 'ADMIN';
+  });
+}
+
+function initializeHrms() {
+  const setupMessage = hasAdminAccount_() ? 'Admin already exists' : setupAdmin_();
+  const validation = validateSetup_();
+  return {
+    success: validation.ok,
+    message: setupMessage,
+    validation: validation
+  };
+}
+
 function logActivity_(empId, action, details) {
   const logSheet = getOrCreateSheet_(AUDIT_LOG);
   logSheet.appendRow([

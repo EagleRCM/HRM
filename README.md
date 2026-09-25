@@ -32,9 +32,7 @@ Add these temporary script properties in **Project Settings**:
 - `HRMS_INITIAL_ADMIN_PASSWORD` (at least 10 characters)
 - `HRMS_INITIAL_ADMIN_EMAIL`
 
-Then run `setupAdmin_` once from the Apps Script editor. The trailing underscore keeps this bootstrap function private from browser RPC calls. The bootstrap password property is deleted after the account is created successfully.
-
-Run `validateSetup_` from the editor before deployment. It reports a missing spreadsheet property, missing sheets, and incompatible header names without changing existing data.
+Then select and run `initializeHrms` once from the Apps Script editor. It calls the private admin bootstrap, deletes the bootstrap password property after success, and validates the required sheets and headers.
 
 Do not commit real passwords or `.clasp.json`.
 
