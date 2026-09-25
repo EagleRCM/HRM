@@ -83,6 +83,9 @@ function doGet(e) {
         template.userJson =
           JSON.stringify(user).replace(/</g, '\\u003c');
 
+        template.portalUrlJson =
+          JSON.stringify(getPortalUrl_()).replace(/</g, '\\u003c');
+
 
         return template
           .evaluate()
@@ -104,8 +107,12 @@ function doGet(e) {
     // LOGIN PAGE
     // ==========================================
 
-    return HtmlService
-      .createHtmlOutputFromFile('login')
+    const loginTemplate = HtmlService.createTemplateFromFile('login');
+    loginTemplate.portalUrlJson =
+      JSON.stringify(getPortalUrl_()).replace(/</g, '\\u003c');
+
+    return loginTemplate
+      .evaluate()
       .setTitle('HRMS Login')
       .setXFrameOptionsMode(
         HtmlService.XFrameOptionsMode.ALLOWALL

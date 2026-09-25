@@ -399,6 +399,7 @@
 // Values supplied securely by Code.gs doGet()
 const token = <?!= tokenJson ?>;
 const user = <?!= userJson ?>;
+const portalUrl = <?!= portalUrlJson ?>;
 
 let dashboardData = null;
 
@@ -785,8 +786,7 @@ if (user && user.empId) {
         // ADMIN NAVIGATION
         // ============================================
         function goToAdmin() {
-            const baseUrl = window.location.href.split('?')[0];
-            window.location.href = baseUrl + '?token=' + encodeURIComponent(token) + '&page=admin';
+            window.top.location.href = portalUrl + '?token=' + encodeURIComponent(token) + '&page=admin';
         }
 
         // ============================================
@@ -798,11 +798,11 @@ if (user && user.empId) {
             google.script.run
                 .withSuccessHandler(function() {
                     sessionStorage.clear();
-                    window.location.href = window.location.href.split('?')[0];
+                    window.top.location.href = portalUrl;
                 })
                 .withFailureHandler(function() {
                     sessionStorage.clear();
-                    window.location.href = window.location.href.split('?')[0];
+                    window.top.location.href = portalUrl;
                 })
                 .logout(token);
         }

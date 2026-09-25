@@ -107,13 +107,14 @@
     <script>
         const token = <?!= tokenJson ?>;
         const user = <?!= userJson ?>;
+        const portalUrl = <?!= portalUrlJson ?>;
 
         sessionStorage.setItem('hrms_token', token);
         sessionStorage.setItem('hrms_user', JSON.stringify(user));
 
         document.addEventListener('DOMContentLoaded', function() {
             if (!token || !user.empId) {
-                window.location.href = window.location.href.split('?')[0];
+                window.top.location.href = portalUrl;
                 return;
             }
             loadAllReports();
@@ -158,8 +159,7 @@
         }
 
         function goToDashboard() {
-            const baseUrl = window.location.href.split('?')[0];
-            window.location.href = baseUrl + '?token=' + encodeURIComponent(token);
+            window.top.location.href = portalUrl + '?token=' + encodeURIComponent(token);
         }
 
         function renderLeaveSummary(data) {

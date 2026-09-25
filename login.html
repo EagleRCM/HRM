@@ -228,6 +228,8 @@
 
 <script>
 
+  const portalUrl = <?!= portalUrlJson ?>;
+
   const loginForm = document.getElementById('loginForm');
   const empIdInput = document.getElementById('empId');
   const passwordInput = document.getElementById('password');
@@ -295,8 +297,7 @@
         sessionStorage.setItem('hrms_token', response.token);
         sessionStorage.setItem('hrms_user', JSON.stringify(response.user));
 
-        const baseUrl = window.location.href.split('?')[0];
-        window.top.location.href = baseUrl + '?token=' + encodeURIComponent(response.token);
+        window.top.location.href = portalUrl + '?token=' + encodeURIComponent(response.token);
       })
       .withFailureHandler(function (error) {
         setLoading(false);

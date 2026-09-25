@@ -38,6 +38,7 @@ for (const file of htmlFiles) {
     const javascript = match[1]
       .replace(/<\?!=\s*tokenJson\s*\?>/g, '"test-token"')
       .replace(/<\?!=\s*userJson\s*\?>/g, '{"empId":"TEST","role":"Admin","isAdmin":true}')
+      .replace(/<\?!=\s*portalUrlJson\s*\?>/g, '"https://example.test/exec"')
       .replace(/<\?=[\s\S]*?\?>/g, '""');
     new vm.Script(javascript, { filename: `${file}:script-${index + 1}` });
   });
